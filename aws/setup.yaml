@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Real Time Page Editor Template
+Parameters:
+  RalTimePageEditorWebsiteBucketName:
+    Type: String
+    Description: S3 Bucket name for real time page editor website
+    Default: real-time-page-editor-website
+Resources:
+  RealTimePageEditorWebsiteS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref RalTimePageEditorWebsiteBucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: ObjectWriter
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+  RealTimePageEditorWebsiteS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref RealTimePageEditorWebsiteS3Bucket
+      PolicyDocument:
+        Id: RealTimePageEditorWebsiteS3BucketPolicy
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: "*"
+            Action: "s3:GetObject"
+            Resource: !Sub "arn:aws:s3:::${RealTimePageEditorWebsiteS3Bucket}/*"
