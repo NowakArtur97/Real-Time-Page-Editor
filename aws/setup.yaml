@@ -4,7 +4,7 @@ Parameters:
   RalTimePageEditorWebsiteBucketName:
     Type: String
     Description: S3 Bucket name for real time page editor website
-    Default: real-time-page-editor-website
+    Default: real-time-page-editor
   GitHubRepositoryURL:
     Type: String
     Description: URL for GitHub repository with real time page editor website files
@@ -13,6 +13,10 @@ Parameters:
     Type: String
     Description: Real time page editor website files to copy from GitHub
     Default: index.html,style.css,live_editor.js
+  CreatedWebsiteBucketName:
+    Type: String
+    Description: S3 Bucket name for created website with deployed code from editor
+    Default: real-time-page-editor-website
 Resources:
   RealTimePageEditorWebsiteS3Bucket:
     Type: AWS::S3::Bucket
@@ -160,6 +164,31 @@ Resources:
                   print("Exception when copying files from GitHub to S3 bucket: " + BUCKET_NAME)
                   print(e)
                   cfnresponse.send(event, context, cfnresponse.FAILED, responseData)
+  CreatedWebsiteS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref CreatedWebsiteBucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: ObjectWriter
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+  CreatedWebsiteS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CreatedWebsiteS3Bucket
+      PolicyDocument:
+        Id: CreatedWebsiteS3BucketPolicy
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: "*"
+            Action: "s3:GetObject"
+            Resource: !Sub "arn:aws:s3:::${CreatedWebsiteS3Bucket}/*"
   S3BucketCleanerLambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -182,11 +211,13 @@ Resources:
                   - s3:ListBucket
                 Resource:
                   - !Sub "arn:aws:s3:::${RealTimePageEditorWebsiteS3Bucket}"
+                  - !Sub "arn:aws:s3:::${CreatedWebsiteS3Bucket}"
               - Effect: Allow
                 Action:
                   - s3:DeleteObject
                 Resource:
                   - !Sub "arn:aws:s3:::${RealTimePageEditorWebsiteS3Bucket}/*"
+                  - !Sub "arn:aws:s3:::${CreatedWebsiteS3Bucket}/*"
   S3BucketCleanerLambdaInvoke:
     Type: AWS::CloudFormation::CustomResource
     Version: "1.0"
@@ -202,7 +233,13 @@ Resources:
       Environment:
         Variables:
           BUCKETS_TO_CLEAN:
-            !Join [",", [!Ref RealTimePageEditorWebsiteS3Bucket]]
+            !Join [
+              ",",
+              [
+                !Ref RealTimePageEditorWebsiteS3Bucket,
+                !Ref CreatedWebsiteS3Bucket,
+              ],
+            ]
       Code:
         ZipFile: |
           import os.path
@@ -232,5 +269,8 @@ Resources:
                   cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
 Outputs:
   RealTimePageEditorWebsiteUrl:
-    Description: Real Time Page Editor Website Url
+    Description: Real time page editor website url
     Value: !GetAtt RealTimePageEditorWebsiteS3Bucket.WebsiteURL
+  CreatedWebsiteUrl:
+    Description: Created using editor website url
+    Value: !GetAtt CreatedWebsiteS3Bucket.WebsiteURL
