@@ -31,3 +31,7 @@ Resources:
             Principal: "*"
             Action: "s3:GetObject"
             Resource: !Sub "arn:aws:s3:::${RealTimePageEditorWebsiteS3Bucket}/*"
+Outputs:
+  WebsiteUrl:
+    Description: Real Time Page Editor Website Url
+    Value: !GetAtt RealTimePageEditorWebsiteS3Bucket.WebsiteURL
