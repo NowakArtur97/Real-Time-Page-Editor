@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real Time Page Editor</title>
+    <link rel="stylesheet" href="style.css" />
+    <!-- <script src="deploy.js"></script> -->
+  </head>
+  <body>
+    <div class="container">
+      <div class="heading__wrapper">
+        <h1 class="heading">Code Editor</h1>
+      </div>
+      <div class="editor_wrapper">
+        <div class="editor">
+          <section class="editor__html">
+            <label class="editor_label" for="editor__html">HTML</label>
+            <textarea
+              class="editor__textarea"
+              id="editor__html"
+              name="editor__html"
+              spellcheck="false"
+            ></textarea>
+          </section>
+          <section class="editor__css">
+            <label class="editor_label" for="editor__css">CSS</label>
+            <textarea
+              class="editor__textarea"
+              id="editor__css"
+              name="editor__css"
+              spellcheck="false"
+            ></textarea>
+          </section>
+          <section class="editor__js">
+            <label class="editor_label" for="editor__js">JS</label>
+            <textarea
+              class="editor__textarea"
+              id="editor__js"
+              name="editor__js"
+              spellcheck="false"
+            ></textarea>
+          </section>
+        </div>
+        <div class="output">
+          <label class="editor_label">Output</label>
+          <iframe class="output__iframe"></iframe>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
