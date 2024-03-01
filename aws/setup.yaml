@@ -17,6 +17,20 @@ Parameters:
     Type: String
     Description: S3 Bucket name for created website with deployed code from editor
     Default: real-time-page-editor-website
+  FileWithAPIGatewayInvokeURL:
+    Type: String
+    Description: File with API Gateway invoke url to be reaplaced by lambda function
+    Default: deploy.js
+  APIGatewayName:
+    Type: String
+    Default: real-time-page-editor-api
+  APIGatewayStageName:
+    Type: String
+    AllowedPattern: "[a-z0-9]+"
+    Default: prod
+  APIGatewayOperationName:
+    Type: String
+    Default: real-time-page-editor-deployment
 Resources:
   RealTimePageEditorWebsiteS3Bucket:
     Type: AWS::S3::Bucket
@@ -164,6 +178,55 @@ Resources:
                   print("Exception when copying files from GitHub to S3 bucket: " + BUCKET_NAME)
                   print(e)
                   cfnresponse.send(event, context, cfnresponse.FAILED, responseData)
+  APIGatewayRestAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Description: Real Time Page Editor API Gateway
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Name: !Ref APIGatewayName
+  APIGatewayResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt APIGatewayRestAPI.RootResourceId
+      PathPart: !Ref APIGatewayOperationName
+      RestApiId: !Ref APIGatewayRestAPI
+  APIGatewayMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId: !Ref APIGatewayResource
+      RestApiId: !Ref APIGatewayRestAPI
+      OperationName: !Ref APIGatewayOperationName
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      HttpMethod: POST
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: WHEN_NO_MATCH
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt APIGatewayToS3LambdaFunction.Arn
+  APIGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: APIGatewayMethod
+    Properties:
+      RestApiId: !Ref APIGatewayRestAPI
+      Description: Real Time Page Editor API Deployment
+  APIGatewayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref APIGatewayDeployment
+      RestApiId: !Ref APIGatewayRestAPI
+      StageName: !Ref APIGatewayStageName
+      Description: Real Time Page Editor API Stage v1
+  APIGatewayPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt APIGatewayToS3LambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
   CreatedWebsiteS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -189,6 +252,47 @@ Resources:
             Principal: "*"
             Action: "s3:GetObject"
             Resource: !Sub "arn:aws:s3:::${CreatedWebsiteS3Bucket}/*"
+  APIGatewayToS3LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: APIGatewayToS3LambdaFunctionPolicies
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource: !Sub "arn:aws:s3:::${CreatedWebsiteS3Bucket}/*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+  APIGatewayToS3LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.9
+      Timeout: 30
+      Handler: index.lambda_handler
+      Role: !GetAtt APIGatewayToS3LambdaRole.Arn
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref CreatedWebsiteS3Bucket
+      Code:
+        ZipFile: |
+          import json
   S3BucketCleanerLambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -268,6 +372,9 @@ Resources:
               else:
                   cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
 Outputs:
+  APIGatewayInvokeURL:
+    Description: API invoke URL
+    Value: !Sub https://${APIGatewayRestAPI}.execute-api.${AWS::Region}.amazonaws.com/${APIGatewayStageName}
   RealTimePageEditorWebsiteUrl:
     Description: Real time page editor website url
     Value: !GetAtt RealTimePageEditorWebsiteS3Bucket.WebsiteURL
