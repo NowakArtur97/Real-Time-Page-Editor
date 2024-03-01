@@ -7,11 +7,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const cssCodeElement = getCodeFromEditor("css");
   const jsCodeElement = getCodeFromEditor("js");
 
-  function loadCodeToEditor() {
-    outputElement.contentDocument.body.innerHTML =
-      htmlCodeElement.value + "<style>" + cssCodeElement.value + "</style>";
+  const deployButtonElement = document.querySelector(".deploy_button");
 
-    outputElement.contentWindow.eval(jsCodeElement.value);
+  function loadCodeToEditor() {
+    const htmlCode = htmlCodeElement.value;
+    const cssCode = cssCodeElement.value;
+    const jsCode = jsCodeElement.value;
+
+    if (htmlCode?.length > 0 || cssCode?.length > 0 || jsCode?.length) {
+      deployButtonElement.classList.add("deploy_button--visible");
+    } else {
+      deployButtonElement.classList.remove("deploy_button--visible");
+    }
+
+    outputElement.contentDocument.body.innerHTML =
+      htmlCode + "<style>" + cssCode + "</style>";
+
+    outputElement.contentWindow.eval(jsCode);
   }
 
   document

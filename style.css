@@ -56,7 +56,7 @@ body {
   transform: scale(0);
 }
 
-.deploy_button--appear {
+.deploy_button--visible {
   transform: scale(1);
 }
 
