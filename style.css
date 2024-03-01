@@ -41,6 +41,30 @@ body {
   color: hsl(0, 0%, 100%);
 }
 
+.deploy_button {
+  margin-left: 2%;
+  padding: 0.25% 1%;
+
+  background-color: hsl(237, 33%, 38%);
+
+  color: hsl(0, 0%, 100%);
+  font-size: 0.75rem;
+
+  cursor: pointer;
+
+  transition: all 0.5s;
+  transform: scale(0);
+}
+
+.deploy_button--appear {
+  transform: scale(1);
+}
+
+.deploy_button:hover {
+  color: hsl(237, 33%, 38%);
+  background-color: hsl(0, 0%, 100%);
+}
+
 .editor__wrapper {
   display: flex;
   justify-content: space-between;

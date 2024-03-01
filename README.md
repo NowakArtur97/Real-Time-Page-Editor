@@ -23,7 +23,7 @@ AWS CloudFormation template for creating resources for a static website on an S3
 CloudFormation resources:
 
 - S3 Buckets
-- Bucket Policy
+- Bucket Policies
 - IAM Roles
 - Lambda Functions
 - CloudFormation Custom Resources
