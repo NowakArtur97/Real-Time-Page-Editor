@@ -5,6 +5,7 @@ h1 {
     cursor: pointer;
 }
 
-document.querySelector("h1").addEventListener("click", () => {
+const h1 = document.querySelector("h1");
+h1.addEventListener("click", () => {
     document.querySelector("h1").style.color = "blue";
 });

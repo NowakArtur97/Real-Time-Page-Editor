@@ -12,7 +12,7 @@ Parameters:
   FilesToCopyFromGitHub:
     Type: String
     Description: Real time page editor website files to copy from GitHub
-    Default: index.html,style.css,live_editor.js
+    Default: index.html,style.css,live_editor.js,deploy.js
   CreatedWebsiteBucketName:
     Type: String
     Description: S3 Bucket name for created website with deployed code from editor
